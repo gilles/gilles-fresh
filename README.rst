@@ -22,3 +22,4 @@ Limitations and TODO
 * Increment by 1 only (should be easy to add)
 * No unit tests
 * No templates
+* Can't get siege to work to test concurrency GAE returns 500 (can use curl and Postman though)
