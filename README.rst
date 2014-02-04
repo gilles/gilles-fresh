@@ -11,8 +11,8 @@ It's easy to count things via a decorator and a context manager.
 
 It is very basic, just has the root endpoint:
 
-* GET => display the two predetermined counters
-* POST => Increment the two test counters
+* `GET /` => display the two predetermined counters
+* `POST /` => Increment the two test counters
 
 It lives here: http://gilles-freshplanet.appspot.com/
 
