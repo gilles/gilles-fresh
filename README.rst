@@ -1,5 +1,8 @@
 APP ENGINE
-==========
+##########
+
+Version 1
+=========
 
 What's there
 ------------
@@ -27,3 +30,10 @@ solution could be to increment in memcache (possibly sharded but dedicated memca
 and have reaper (cron) jobs get the value, increment NDB then clear the memcache counter.
 
 You might tolerate some data loss (if memcache goes down) or handle it gracefully by putting the action in a log and replay it.
+
+Version 2
+=========
+
+Use the memcache trick described in Version 1. Extra endpoint:
+
+* `GET /reap` => triggers the reap and display counters

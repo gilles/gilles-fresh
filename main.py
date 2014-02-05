@@ -20,7 +20,7 @@ import jinja2
 import webapp2
 
 from counter import counted, counter
-from counter.db import get_count
+from counter.mc import reap, get_count
 
 
 DECORATED_COUNTER = 'decorated'
@@ -59,7 +59,22 @@ class MainHandler(webapp2.RequestHandler):
         self.response.set_status(201)
 
 
+def trigger_reap(request, *args, **kwargs):
+    """
+    This should be protected so it's not accessible to the public:
+    https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
+    """
+    reap([DECORATED_COUNTER, CONTEXT_COUNTER])
+    counters = {
+        'decorated': get_count(DECORATED_COUNTER),
+        'context': get_count(CONTEXT_COUNTER)
+    }
+    template = JINJA_ENVIRONMENT.get_template('index.html')
+    return webapp2.Response(template.render({'counters': counters}))
+
+
 app = webapp2.WSGIApplication(
     [
-        ('/', MainHandler)
+        ('/', MainHandler),
+        ('/reap', trigger_reap),
     ], debug=True)

@@ -1,0 +1,4 @@
+cron:
+- description: reap metrics
+  url: /reap
+  schedule: every 1 minutes

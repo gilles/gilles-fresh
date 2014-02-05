@@ -2,7 +2,7 @@
 from contextlib import contextmanager
 from functools import wraps
 
-from counter.db import increment
+from counter.mc import increment
 
 
 def counted(counter_name):

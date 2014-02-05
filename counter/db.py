@@ -61,18 +61,18 @@ def get_count(name):
     return total
 
 
-def increment(name):
+def increment(name, count=1):
     """Increment the value for a given sharded counter.
 
     Args:
         name: The name of the counter.
     """
     config = GeneralCounterShardConfig.get_or_insert(name)
-    _increment(name, config.num_shards)
+    _increment(name, config.num_shards, count)
 
 
 @ndb.transactional
-def _increment(name, num_shards):
+def _increment(name, num_shards, count=1):
     """Transactional helper to increment the value for a given sharded counter.
 
     Also takes a number of shards to determine which shard will be used.
@@ -86,7 +86,7 @@ def _increment(name, num_shards):
     counter = GeneralCounterShard.get_by_id(shard_key_string)
     if counter is None:
         counter = GeneralCounterShard(id=shard_key_string)
-    counter.count += 1
+    counter.count += count
     counter.put()
     # Memcache increment does nothing if the name is not a key in memcache
     memcache.incr(name)
