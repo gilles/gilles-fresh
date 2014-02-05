@@ -15,12 +15,13 @@
 # limitations under the License.
 #
 import os
+import random
 
 import jinja2
 import webapp2
 
 from counter import counted, counter
-from counter.mc import reap, get_count
+from counter.mc import reap, get_all_counters
 
 
 DECORATED_COUNTER = 'decorated'
@@ -42,18 +43,15 @@ def foo():
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        counters = {
-            'decorated': get_count(DECORATED_COUNTER),
-            'context': get_count(CONTEXT_COUNTER)
-        }
+        counters = get_all_counters()
         template = JINJA_ENVIRONMENT.get_template('index.html')
-        self.response.write(template.render({'counters': counters}))
+        return webapp2.Response(template.render({'counters': counters}))
 
     def post(self):
         # decorated
         foo()
         # context
-        with counter(CONTEXT_COUNTER):
+        with counter('%s-%d' % (CONTEXT_COUNTER, random.randint(1, 5))):
             # your logic here
             pass
         self.response.set_status(201)
@@ -64,11 +62,8 @@ def trigger_reap(request, *args, **kwargs):
     This should be protected so it's not accessible to the public:
     https://developers.google.com/appengine/docs/python/config/cron#Python_app_yaml_Securing_URLs_for_cron
     """
-    reap([DECORATED_COUNTER, CONTEXT_COUNTER])
-    counters = {
-        'decorated': get_count(DECORATED_COUNTER),
-        'context': get_count(CONTEXT_COUNTER)
-    }
+    reap()
+    counters = get_all_counters()
     template = JINJA_ENVIRONMENT.get_template('index.html')
     return webapp2.Response(template.render({'counters': counters}))
 

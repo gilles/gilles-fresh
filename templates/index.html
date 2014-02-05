@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  {% for key, value in counters.iteritems() %}
-    <h1>{{ key }}: {{ value }}</h1>
+  {% for counter in counters %}
+    <h1>{{ counter.key.string_id() }}: {{ counter.count }}</h1>
   {% endfor %}
 {% endblock %}

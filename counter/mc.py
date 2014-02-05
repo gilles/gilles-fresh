@@ -5,9 +5,21 @@ from google.appengine.ext import ndb
 
 NAMESPACE = 'counter'
 
+# I doubt this will grow out of proportions even with
+# dynamic counters
+_counter_cache = set()
+
 
 class NDBStorage(ndb.Model):
     count = ndb.IntegerProperty(default=0)
+
+
+@ndb.transactional
+def track_counter(name):
+    ndb_storage = NDBStorage.get_by_id(name, namespace=NAMESPACE)
+    if ndb_storage is None:
+        ndb_storage = NDBStorage(id=name, namespace=NAMESPACE)
+        ndb_storage.put()
 
 
 def increment(name, count=1):
@@ -15,7 +27,12 @@ def increment(name, count=1):
     Increment a counter
     TODO handle failure gracefully
     """
-    memcache.incr(name, delta=count, initial_value=count, namespace=NAMESPACE)
+    # check the counter is tracked
+    if name not in _counter_cache:
+        track_counter(name)
+        _counter_cache.add(name)
+    print 'increment: %s' % name
+    memcache.incr(name, delta=count, initial_value=0, namespace=NAMESPACE)
 
 
 def get_count(name):
@@ -28,21 +45,27 @@ def get_count(name):
     return ndb_storage.count
 
 
-def reap(counters):
+def get_all_counters():
+    return NDBStorage.query(namespace=NAMESPACE).iter()
+
+
+@ndb.transactional
+def _increment_db(record, value):
+    record.count += value
+    record.put()
+
+
+def reap():
     """
     Reap the counters from memcache and put them in persistent storage
     We need the increment/reset instead of get/put in case memcache fails (counter resetted to 0)
-
-    This means that we loose the increments happening between the read and the set.
-            We can use CAS to alleviate the problem but it won't make it go away for very busy counters
     """
-    values = memcache.get_multi(counters, namespace=NAMESPACE)
-    for key, value in values.iteritems():
-        # we can use ndb.get_multi here to but handling the None is a bit more complex
-        # it's possible but probably outside of the scope of the exercise
-        ndb_storage = NDBStorage.get_by_id(key, namespace=NAMESPACE)
-        if ndb_storage is None:
-            ndb_storage = NDBStorage(id=key, namespace=NAMESPACE)
-        ndb_storage.count += value
-        ndb_storage.put()
-        memcache.set(key, 0, namespace=NAMESPACE)
+
+    # This might be more efficient by paginating manually and do memcache.get_multi
+    for counter in get_all_counters():
+        value = memcache.get(counter.key.string_id(), namespace=NAMESPACE)
+        # if value is None:
+        #     continue
+        _increment_db(counter, value)
+        memcache.decr(counter.key.string_id(), value, namespace=NAMESPACE)
+        print 'memcache: %s => %s' % (counter.key.string_id(), memcache.get(counter.key.string_id(), namespace=NAMESPACE))

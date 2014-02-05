@@ -37,3 +37,8 @@ Version 2
 Use the memcache trick described in Version 1. Extra endpoint:
 
 * `GET /reap` => triggers the reap and display counters
+
+Version 3
+=========
+
+* Dynamic counters
