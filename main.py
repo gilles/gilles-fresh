@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import os
+
+import jinja2
 import webapp2
 
 from counter import counted, counter
@@ -22,6 +25,11 @@ from counter.db import get_count
 
 DECORATED_COUNTER = 'decorated'
 CONTEXT_COUNTER = 'context'
+
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), 'templates')),
+    extensions=['jinja2.ext.autoescape'],
+    autoescape=True)
 
 
 @counted(DECORATED_COUNTER)
@@ -34,12 +42,12 @@ def foo():
 
 class MainHandler(webapp2.RequestHandler):
     def get(self):
-        decorated = get_count(DECORATED_COUNTER)
-        context = get_count(CONTEXT_COUNTER)
-        # TODO move this in a template
-        self.response.write('<html><body><h1>%s: %d</h1><h1>%s: %d</h1></body></html>' %
-                            (DECORATED_COUNTER, decorated, CONTEXT_COUNTER, context)
-        )
+        counters = {
+            'decorated': get_count(DECORATED_COUNTER),
+            'context': get_count(CONTEXT_COUNTER)
+        }
+        template = JINJA_ENVIRONMENT.get_template('index.html')
+        self.response.write(template.render({'counters': counters}))
 
     def post(self):
         # decorated

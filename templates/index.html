@@ -1,0 +1,7 @@
+{% extends 'layout.html' %}
+
+{% block body %}
+  {% for key, value in counters.iteritems() %}
+    <h1>{{ key }}: {{ value }}</h1>
+  {% endfor %}
+{% endblock %}
